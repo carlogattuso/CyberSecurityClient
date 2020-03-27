@@ -1,0 +1,127 @@
+<mat-grid-list cols="2" rowHeight="1.25:1">
+  <mat-grid-tile>
+    <mat-card id="blind" style="text-align: center;">
+      <mat-card-content>
+        <mat-card-title>
+          Blind Signature
+        </mat-card-title>
+        <form [formGroup]="blindSignatureForm">
+          <div class="form-group">
+            <mat-form-field>
+              <mat-label>Write message to sign</mat-label>
+              <label>
+                <input matInput placeholder="Message" formControlName="blindMessage" [(ngModel)]="message">
+              </label>
+              <mat-icon matSuffix></mat-icon>
+            </mat-form-field><br/>
+            <button mat-raised-button color="primary" style="margin-right:5px;" (click)="blindSign()" [disabled]="!blindSignatureForm.valid">Get Blind Signature</button>
+            <mat-list>
+              <mat-list-item>
+              <mat-label>Blind Message:<br></mat-label>
+              </mat-list-item>
+              <mat-list-item>
+                <label>
+                  <textarea id="blind-message" matInput></textarea>
+                </label>
+              </mat-list-item>
+              <mat-list-item>
+                <mat-label>Blind Signature:<br></mat-label>
+              </mat-list-item>
+              <mat-list-item>
+                <label>
+                  <textarea id="blind-signature" matInput></textarea>
+                </label>
+              </mat-list-item>
+              <mat-list-item>
+                <mat-label>Verified Text:<br></mat-label><br>
+              </mat-list-item>
+              <mat-list-item>
+                <label>
+                  <textarea id="blind-clear-text" matInput ></textarea>
+                </label>
+              </mat-list-item>
+            </mat-list>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </mat-grid-tile>
+  <mat-grid-tile>
+    <mat-card id="sign" style="text-align: center;">
+      <mat-card-content>
+        <mat-card-title>
+          Signature
+        </mat-card-title>
+        <form [formGroup]="signatureForm">
+          <div class="form-group">
+            <mat-form-field>
+              <mat-label>Write message to sign</mat-label>
+              <label>
+                <input matInput placeholder="Message" formControlName="stdMessage" [(ngModel)]="stdMessage">
+              </label>
+              <mat-icon matSuffix></mat-icon>
+            </mat-form-field><br/>
+            <button mat-raised-button color="primary" style="margin-right:5px;" (click)="getSignature()" [disabled]="!signatureForm.valid">Get Signature</button>
+            <mat-list>
+              <mat-list-item>
+                  <mat-label>Signature:<br></mat-label>
+              </mat-list-item>
+              <mat-list-item>
+                <label>
+                  <textarea id="signature" matInput></textarea>
+                </label>
+              </mat-list-item>
+              <mat-list-item>
+                <mat-label>Verified Text:<br></mat-label><br>
+              </mat-list-item>
+              <mat-list-item>
+                <label>
+                  <textarea id="signature-text" matInput>{{stdClearText}}</textarea>
+                </label>
+              </mat-list-item>
+            </mat-list>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </mat-grid-tile>
+  <mat-grid-tile>
+    <mat-card id="crypto" style="text-align: center;">
+      <mat-card-content>
+        <mat-card-title>
+          Encrypt
+        </mat-card-title>
+        <form [formGroup]="decryptForm">
+          <div class="form-group">
+            <mat-form-field>
+              <mat-label>Write message to encrypt</mat-label>
+              <label>
+                <input matInput placeholder="Message" formControlName="messageToEncrypt" [(ngModel)]="messageToEncrypt">
+              </label>
+              <mat-icon matSuffix></mat-icon>
+            </mat-form-field><br/>
+            <button mat-raised-button color="primary" style="margin-right:5px;" (click)="getClearText()" [disabled]="!decryptForm.valid">Get Decryption</button>
+            <mat-list>
+              <mat-list-item>
+                <mat-label>Encrypted message:<br></mat-label>
+              </mat-list-item>
+              <mat-list-item>
+                <label>
+                  <textarea id="crypto-message" matInput></textarea>
+                </label>
+              </mat-list-item>
+              <mat-list-item>
+                <mat-label>Decrypted Text:<br></mat-label><br>
+              </mat-list-item>
+              <mat-list-item>
+                <label>
+                  <textarea id="crypto-clear-text" matInput></textarea>
+                </label>
+              </mat-list-item>
+            </mat-list>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </mat-grid-tile>
+</mat-grid-list>
