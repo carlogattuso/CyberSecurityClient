@@ -1,8 +1,9 @@
 mat-card {
   background-color: whitesmoke;
   width: 100%;
-  margin: 10% 25%;
   child-align: auto;
+  margin-right: 25%;
+  margin-left: 25%;
 }
 
 mat-card-content {
