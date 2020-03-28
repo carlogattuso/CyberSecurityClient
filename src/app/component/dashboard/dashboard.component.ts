@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { RsaService } from '../services/rsa.service';
+import { RsaService } from '../../services/rsa.service';
 import * as rsa from 'rsa';
 import * as bc from 'bigint-conversion';
 import * as bcu from 'bigint-crypto-utils';
@@ -61,7 +61,7 @@ export class DashboardComponent implements OnInit {
   }
 
   async getSignature(){
-    this.rsaService.checkSignature(bc.bigintToHex(bc.textToBigint(this.stdMessage))).subscribe(
+    this.rsaService.signMessage(bc.bigintToHex(bc.textToBigint(this.stdMessage))).subscribe(
       data => {
         this.stdSignature = data.signature;
         this.stdClearText = bc.bigintToText(this.publicKey.verify(bc.hexToBigint(this.stdSignature)));
@@ -78,7 +78,7 @@ export class DashboardComponent implements OnInit {
     while (!(bcu.gcd(this.r,this.publicKey.n) === this._ONE));
     this.b = await (bc.textToBigint(this.message)*this.publicKey.encrypt(this.r))%this.publicKey.n;
     this.blindMessage = await bc.bigintToHex(this.b);
-    this.rsaService.checkSignature(this.blindMessage).subscribe(
+    this.rsaService.signMessage(this.blindMessage).subscribe(
       async data => {
         this.blindSignature = await data.signature;
         this.s = await (bc.hexToBigint(this.blindSignature)*bcu.modInv(this.r, this.publicKey.n))%this.publicKey.n;
