@@ -9,11 +9,32 @@ import {FormBuilder, FormControl, FormGroup, Validators} from "@angular/forms";
   templateUrl: './non-repudiation.component.html',
   styleUrls: ['./non-repudiation.component.css']
 })
+
+/**
+ * Component to test non-repudiation protocol
+ *
+ * Non-reliable channel
+ * Non-reliable peers
+ *
+ * CyberSecurityClient -- Peer A
+ * CyberSecurityServer -- Peer B
+ * CyberSecurityTTP -- TTP
+ *
+ */
 export class NonRepudiationComponent implements OnInit {
+  /**
+   * General Variables
+   */
+
+  /**
+   * A's RSA keyPair
+   * @name keyPair
+   * @type {rsa.KeyPair}
+   */
+  keyPair: rsa.KeyPair;
 
   nonRepudiationForm: FormGroup;
-  message: string;
-  keyPair: rsa.KeyPair;
+  m: string;
   cryptoKey;
   key: string;
   algKeyGen;
@@ -22,6 +43,12 @@ export class NonRepudiationComponent implements OnInit {
   c: string;
   signature: string;
 
+  /**
+   * Non-Repudiation constructor
+   * @constructor
+   * @param {rsaService} rsaService - RSA Service.
+   * @param {formBuilder} formBuilder - FormBuilder to manage forms.
+   */
   constructor(private rsaService: RsaService, private formBuilder: FormBuilder) {
     this.nonRepudiationForm = this.formBuilder.group({
       message: new FormControl('', Validators.required),
@@ -41,18 +68,38 @@ export class NonRepudiationComponent implements OnInit {
   }
 
   async ngOnInit(){
+    /** 256 bitLength keyPair generation */
     this.keyPair = await rsa.generateRandomKeys(256);
-    console.log(this.keyPair);
-    let message = "Test message";
-    await crypto.subtle.generateKey(this.algKeyGen,true,this.keyUsages)
+
+    /**
+     * Generates CryptoKey using AES-256-CBC block cipher
+     *
+     * @return {CryptoKey} cryptoKey - cryptoKey with a 256-length key generated
+     */
+    await crypto.subtle.generateKey({name:'AES-CBC',length:256},true,['encrypt','decrypt'])
       .then(data => this.cryptoKey = data);
+
+    /**
+     * Exports 256-length key from previous CryptoKey
+     *
+     * @param {CryptoKey} cryptoKey - cryptoKey with extractable keys
+     * @return {stringHex} key - 256-length key
+     */
     await crypto.subtle.exportKey("raw",this.cryptoKey)
       .then(data => this.key = bc.bufToHex(data));
   }
 
+  /** Encrption method */
   async encrypt() {
-    this.algEncrypt.iv = await crypto.getRandomValues(new Uint8Array(16));
-    await crypto.subtle.encrypt(this.algEncrypt, this.cryptoKey, bc.textToBuf(this.message))
+    /**
+     * Encrypts any message with A-B symmetric key, using random iv
+     *
+     * @param {CryptoKey} cryptoKey - cryptoKey with extractable keys
+     * @param {string} m - non-repudiated message
+     * @return {stringHex} c - 256-length cipherText
+     */
+    await crypto.subtle.encrypt(
+      {name:'AES-CBC',iv:crypto.getRandomValues(new Uint8Array(16))}, this.cryptoKey, bc.textToBuf(this.m))
       .then(data => this.c = bc.bufToHex(data));
   }
 
