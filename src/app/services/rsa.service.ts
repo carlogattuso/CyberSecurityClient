@@ -20,7 +20,7 @@ export class RsaService {
     return this.http.get<rsa.PublicKey>(this.url + 'pubKey');
   }
 
-  signMessage (message:HexBase64BinaryEncoding) : Observable<any> {
+  signMessage (message:string) : Observable<any> {
       return this.http.post<any>(this.url + 'sign',{message:message});
   }
 
