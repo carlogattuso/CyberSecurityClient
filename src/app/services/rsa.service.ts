@@ -13,18 +13,18 @@ export class RsaService {
   url: string;
 
   constructor(private http: HttpClient) {
-    this.url = 'http://localhost:3000/';
+    this.url = 'http://localhost:50000/';
   }
 
-  getPublicKey(): Observable<rsa.PublicKey> {
-    return this.http.get<rsa.PublicKey>(this.url + 'pubKey');
+  getPublicKey(): Observable<any> {
+    return this.http.get<any>(this.url + 'pubKey');
   }
 
   signMessage (message:string) : Observable<any> {
       return this.http.post<any>(this.url + 'sign',{message:message});
   }
 
-  checkClearText (crypto:HexBase64BinaryEncoding) : Observable<any>{
+  checkClearText (crypto:string) : Observable<any>{
     return this.http.post<any>(this.url + 'decrypt',{crypto:crypto});
   }
 }

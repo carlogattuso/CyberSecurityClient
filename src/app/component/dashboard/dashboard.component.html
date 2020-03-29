@@ -5,16 +5,16 @@
         <mat-card-title>
           Blind Signature
         </mat-card-title>
-        <form [formGroup]="blindSignatureForm">
+        <form [formGroup]="bsForm">
           <div class="form-group">
             <mat-form-field>
               <mat-label>Write message to sign</mat-label>
               <label>
-                <input matInput placeholder="Message" formControlName="blindMessage" [(ngModel)]="message">
+                <input matInput placeholder="Message" formControlName="bsm" [(ngModel)]="bsm">
               </label>
               <mat-icon matSuffix></mat-icon>
             </mat-form-field><br/>
-            <button mat-raised-button color="primary" style="margin-right:5px;" (click)="blindSign()" [disabled]="!blindSignatureForm.valid">Get Blind Signature</button>
+            <button mat-raised-button color="primary" style="margin-right:5px;" (click)="blindSignature()" [disabled]="!bsForm.valid">Test Blind Signature</button>
             <mat-list>
               <mat-list-item>
               <mat-label>Blind Message:<br></mat-label>
@@ -52,16 +52,16 @@
         <mat-card-title>
           Signature
         </mat-card-title>
-        <form [formGroup]="signatureForm">
+        <form [formGroup]="sForm">
           <div class="form-group">
             <mat-form-field>
               <mat-label>Write message to sign</mat-label>
               <label>
-                <input matInput placeholder="Message" formControlName="stdMessage" [(ngModel)]="stdMessage">
+                <input matInput placeholder="Message" formControlName="sm" [(ngModel)]="sm">
               </label>
               <mat-icon matSuffix></mat-icon>
             </mat-form-field><br/>
-            <button mat-raised-button color="primary" style="margin-right:5px;" (click)="getSignature()" [disabled]="!signatureForm.valid">Get Signature</button>
+            <button mat-raised-button color="primary" style="margin-right:5px;" (click)="getSignature()" [disabled]="!sForm.valid">Test Signature</button>
             <mat-list>
               <mat-list-item>
                   <mat-label>Signature:<br></mat-label>
@@ -76,7 +76,7 @@
               </mat-list-item>
               <mat-list-item>
                 <label>
-                  <textarea id="signature-text" matInput>{{stdClearText}}</textarea>
+                  <textarea id="signature-clear-text" matInput>{{sClearText}}</textarea>
                 </label>
               </mat-list-item>
             </mat-list>
@@ -91,16 +91,16 @@
         <mat-card-title>
           Encrypt
         </mat-card-title>
-        <form [formGroup]="decryptForm">
+        <form [formGroup]="encForm">
           <div class="form-group">
             <mat-form-field>
               <mat-label>Write message to encrypt</mat-label>
               <label>
-                <input matInput placeholder="Message" formControlName="messageToEncrypt" [(ngModel)]="messageToEncrypt">
+                <input matInput placeholder="Message" formControlName="em" [(ngModel)]="em">
               </label>
               <mat-icon matSuffix></mat-icon>
             </mat-form-field><br/>
-            <button mat-raised-button color="primary" style="margin-right:5px;" (click)="getClearText()" [disabled]="!decryptForm.valid">Get Decryption</button>
+            <button mat-raised-button color="primary" style="margin-right:5px;" (click)="encryption()" [disabled]="!encForm.valid">Test Encryption/Decryption</button>
             <mat-list>
               <mat-list-item>
                 <mat-label>Encrypted message:<br></mat-label>

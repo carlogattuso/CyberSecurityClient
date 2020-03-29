@@ -4,8 +4,6 @@ import * as rsa from 'rsa';
 import * as bc from 'bigint-conversion';
 import * as bcu from 'bigint-crypto-utils';
 import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
-import {HexBase64BinaryEncoding} from "crypto";
-import {bitLength} from "bigint-crypto-utils";
 
 @Component({
   selector: 'app-blind-signature',
@@ -26,7 +24,7 @@ export class DashboardComponent implements OnInit {
    * @name publicKey
    * @type {rsa.PublicKey}
    */
-  pubKey: rsa.PublicKey;
+  pubKey;
   /**
    * Save number one for more handy bigint operations
    * @name _ONE
@@ -48,7 +46,7 @@ export class DashboardComponent implements OnInit {
       sm: new FormControl('', Validators.required),
     });
     this.encForm = this.formBuilder.group({
-      messageToEncrypt: new FormControl('', Validators.required),
+      em: new FormControl('', Validators.required),
     });
   }
 
@@ -109,7 +107,7 @@ export class DashboardComponent implements OnInit {
         this.sClearText= bc.bigintToText(await this.pubKey.verify(bc.hexToBigint(this.s1)));
 
         /** Showing values once promises are finished and services are subscribed */
-        document.getElementById('signature').innerHTML = this.sm as string;
+        document.getElementById('signature').innerHTML = this.s1 as string;
         document.getElementById('signature-clear-text').innerHTML = this.sClearText as string;
       }
     );
@@ -182,8 +180,8 @@ export class DashboardComponent implements OnInit {
      * @param {bigint} n - public key's modulo
      * @return {stringHex} bm - blinded message as string
      */
-    this.bm = bc.bigintToHex(await this.pubKey.encrypt(this.r)
-      .then(data => data*bc.textToBigint(this.bsm)%this.pubKey.n));
+    let e = await this.pubKey.encrypt(this.r);
+    this.bm = bc.bigintToHex(await e*bc.textToBigint(this.bsm)%this.pubKey.n);
 
     this.rsaService.signMessage(this.bm).subscribe(
       /** We receive blind signature from server */
@@ -257,7 +255,6 @@ export class DashboardComponent implements OnInit {
      * @return {stringHex} c - cryptoMessage to send to server
      */
     this.c = bc.bigintToHex(await this.pubKey.encrypt(bc.textToBigint(this.em)));
-
     this.rsaService.checkClearText(this.c).subscribe(
       /** We receive the decrypted message from server (if it works it is the same as '@name em') */
       data => {
@@ -265,10 +262,9 @@ export class DashboardComponent implements OnInit {
         this.eClearText = bc.bigintToText(bc.hexToBigint(data.clearText));
 
         /** Showing values once promises are finished and services are subscribed */
-        document.getElementById('crypto-message').innerHTML = this.em as string;
+        document.getElementById('crypto-message').innerHTML = this.c as string;
         document.getElementById('crypto-clear-text').innerHTML = this.eClearText as string;
       }
     );
   }
-
 }
