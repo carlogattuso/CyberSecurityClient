@@ -33,39 +33,20 @@ export class NonRepudiationComponent implements OnInit {
    */
   keyPair: rsa.KeyPair;
 
-  nonRepudiationForm: FormGroup;
-  m: string;
-  cryptoKey;
-  key: string;
-  algKeyGen;
-  algEncrypt;
-  keyUsages;
-  c: string;
-  signature: string;
-
   /**
-   * Non-Repudiation constructor
+   * Non-Repudiation Component constructor
    * @constructor
    * @param {rsaService} rsaService - RSA Service.
    * @param {formBuilder} formBuilder - FormBuilder to manage forms.
    */
   constructor(private rsaService: RsaService, private formBuilder: FormBuilder) {
-    this.nonRepudiationForm = this.formBuilder.group({
-      message: new FormControl('', Validators.required),
+    this.nrForm = this.formBuilder.group({
+      m: new FormControl('', Validators.required),
     });
-    this.algKeyGen = {
-      name: 'AES-CBC',
-      length: 256
-    };
-    this.algEncrypt = {
-      name: 'AES-CBC',
-      iv: null
-    };
-    this.keyUsages = [
-      'encrypt',
-      'decrypt'
-    ];
   }
+
+  cryptoKey;
+  key: string;
 
   async ngOnInit(){
     /** 256 bitLength keyPair generation */
@@ -103,8 +84,48 @@ export class NonRepudiationComponent implements OnInit {
       .then(data => this.c = bc.bufToHex(data));
   }
 
+  /**
+   * Non-repudiation protocol implementation starts
+   */
+
+  /**
+   * Non-repudiation Form to manage messages
+   * @name nrForm
+   * @type {FormGroup}
+   */
+  nrForm: FormGroup;
+  /**
+   * Message that is sent to B
+   * @name m
+   * @type {string}
+   */
+  m: string;
+  /**
+   * Challenge cipherText to B, encrypted using '@name key'
+   * @name m
+   * @type {stringHex}
+   */
+  c: string;
+  /**
+   * Proof of origin (signed body digest)
+   * @name signature
+   * @type {stringHex}
+   */
+  signature: string;
+
+  /** Sent message to peer B method */
   async sendMessage() {
+    /** Get symmetric key + random iv to avoid security issues **/
     await this.encrypt();
+    /**
+     * Message body
+     *
+     * @param {number} type - Message type (This is the first one)
+     * @param {string} src - Source peer A
+     * @param {string} dts - Destination peer B
+     * @param {stringHex} msg - CipherText to reveal message '@name m'
+     * @param {stringHex} timestamp - Time consistency check
+     */
     const body = {
       type: 1,
       src: "A",
@@ -112,6 +133,8 @@ export class NonRepudiationComponent implements OnInit {
       msg: this.c,
       timestamp: Date.now()
     };
+
+    /** Signing digest of message body with SHA-256**/
     await this.digestBody(JSON.stringify(body))
       .then(data => this.keyPair.privateKey.sign(bc.bufToBigint(data)))
       .then(data => this.signature = bc.bigintToHex(data));
@@ -122,6 +145,12 @@ export class NonRepudiationComponent implements OnInit {
     );
   }
 
+  /**
+   * Digest any string with SHA-256 integrity hash function
+   *
+   * @param {string} body
+   * @return {ArrayBuffer}
+   */
   async digestBody(body) {
     const encoder = new TextEncoder();
     const buffer = encoder.encode(body);
