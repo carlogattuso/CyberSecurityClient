@@ -3,7 +3,6 @@ import * as rsa from 'rsa';
 import * as bc from 'bigint-conversion';
 import {FormBuilder, FormControl, FormGroup, Validators} from "@angular/forms";
 import {NonRepudiationBService} from "../../services/non-repudiation-B.service";
-import {NonRepudiationTTPService} from "../../services/non-repudiation-TTP.service";
 import * as sha from 'object-sha';
 
 @Component({
@@ -53,10 +52,9 @@ export class NonRepudiationComponent implements OnInit {
    * Non-Repudiation Component constructor
    * @constructor
    * @param {NonRepudiationBService} nrBService - Non-Repudiation Service with peer B.
-   * @param {NonRepudiationTTPService} nrTTPService - Non-Repudiation Service with peer TTP.
    * @param {formBuilder} formBuilder - FormBuilder to manage forms.
    */
-  constructor(private nrBService: NonRepudiationBService, private nrTTPService: NonRepudiationTTPService,private formBuilder: FormBuilder) {
+  constructor(private nrBService: NonRepudiationBService, private formBuilder: FormBuilder) {
     this.nrForm = this.formBuilder.group({
       m: new FormControl('', Validators.required),
     });
@@ -153,13 +151,19 @@ export class NonRepudiationComponent implements OnInit {
    * @name signature
    * @type {stringHex}
    */
-  signature: string;
+  po: string;
   /**
    * Proof of reception (signed body of message type 2 digest)
    * @name pr
    * @type {stringHex}
    */
   pr:string;
+  /**
+   * Proof of key origin (signed body of message type 4 digest)
+   * @name pkp
+   * @type {stringHex}
+   */
+  pko:string;
   /**
    * Proof of key publication (signed body of message type 4 digest)
    * @name pkp
@@ -185,42 +189,67 @@ export class NonRepudiationComponent implements OnInit {
     /** Signing digest of message body with SHA-256**/
     await this.digestBody(body)
       .then(data => this.keyPair.privateKey.sign(bc.hexToBigint(data)))
-      .then(data => this.signature = bc.bigintToHex(data));
+      .then(data => this.po = bc.bigintToHex(data));
 
-    let json = JSON.parse(JSON.stringify({body:body,signature:this.signature,
+    let json = JSON.parse(JSON.stringify({body:body,signature:this.po,
       pubKey:{e:bc.bigintToHex(this.keyPair.publicKey.e),n:bc.bigintToHex(this.keyPair.publicKey.n)}}));
 
     /** Falta comentar **/
     this.nrBService.sendMessage(json).subscribe(
       async data => {
-        console.log(data);
-        /*let b = data.body;
-        let signature:string = data.signature;
-        this.bPubKey = new rsa.PublicKey(bc.hexToBigint(data.pubKey.e),bc.hexToBigint(data.pubKey.n));
-        if(await this.verifySignature(b,this.bPubKey,signature)){
-          this.pr = signature;
-          let body = { type: 3, src: 'A', dst: 'TTP', msg: this.key, timestamp: Date.now() };
-          let sign = '';
+        let res = JSON.parse(JSON.stringify(data));
+        this.bPubKey = new rsa.PublicKey(bc.hexToBigint(res.pubKey.e),bc.hexToBigint(res.pubKey.n));
+        let proofDigest = bc.bigintToHex(await this.bPubKey.verify(bc.hexToBigint(res.signature)));
+        let bodyDigest = await sha.digest(res.body);
+        if(bodyDigest === proofDigest){
+          this.pr = res.signature;
+          let body = JSON.parse(JSON.stringify({ type: 3, src: 'A', dst: 'TTP', msg: this.key, timestamp: Date.now() }));
+
           await this.digestBody(body)
             .then(data => this.keyPair.privateKey.sign(bc.hexToBigint(data)))
-            .then(data => sign = bc.bigintToHex(data));
+            .then(data => this.pko = bc.bigintToHex(data));
 
-          this.nrTTPService.publishKey({ body: body, signature: sign,
-            pubKey:{ e: bc.bigintToHex(this.keyPair.publicKey.e), n: bc.bigintToHex(this.keyPair.publicKey.n) }
-          }).subscribe(
-            async data => {
-              let b = data.body;
-              let signature = data.signature;
-              this.TTPPubKey = new rsa.PublicKey(bc.hexToBigint(data.pubKey.e),bc.hexToBigint(data.pubKey.n));
-              if(await this.verifySignature(b,this.TTPPubKey,signature)) {
-                this.pkp = signature;
-              } else {
-                console.log("Bad authentication of proof of key publication");
-              }
+          let json = JSON.parse(JSON.stringify({ body: body, signature: this.pko,
+            pubKey:{ e: bc.bigintToHex(this.keyPair.publicKey.e), n: bc.bigintToHex(this.keyPair.publicKey.n) } }));
+
+          console.log("All worked fine");
+          console.log({
+            po:this.po,
+            pr:this.pr,
+            pko:this.pko
           });
+          await this.subscribe();
+          await this.publish(json);
         } else {
           console.log("Bad authentication of proof of reception");
-        }*/
+        }
     });
+  }
+
+  async subscribe() {
+    const ws = new WebSocket('ws://localhost:50001');
+    ws.onopen = function () {
+      ws.send(JSON.stringify({
+        request: 'SUBSCRIBE',
+        message: '',
+        channel: 'key'
+      }));
+      ws.onmessage = function(event){
+        let data = JSON.parse(event.data);
+        console.log(data);
+      };
+    };
+  }
+
+  async publish(message) {
+    const ws = new WebSocket('ws://localhost:50001');
+    ws.onopen = function () {
+      ws.send(JSON.stringify({
+        request: 'PUBLISH',
+        message: message,
+        channel: 'key'
+      }));
+      ws.close();
+    };
   }
 }
