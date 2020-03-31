@@ -1,39 +1,37 @@
 import { Injectable } from '@angular/core';
-import { } from '../../environments/environment';
-import { HttpClient } from '@angular/common/http';
-import {Observable, Subject} from 'rxjs';
-import * as rsa from 'rsa';
-import {HexBase64BinaryEncoding} from "crypto";
+import {HttpClient} from "@angular/common/http";
+import {Observable} from "rxjs";
 
 @Injectable({
   providedIn: 'root'
 })
 /**
- * RSA REST API to test security protocol
+ * Non-Repudiation REST API to manage message exchange between A-B
  *
  *
  */
-export class RsaService {
+export class NonRepudiationBService {
   /**
    * Server endpoint
    */
   url: string;
 
   /**
-   * RsaService constructor
+   * Non-Repudiation-B Component constructor
    * @constructor
    * @param {HttpClient} http - HttpClient module
    */
   constructor(private http: HttpClient) {
-    this.url = 'http://localhost:50000/rsa/';
+    this.url = 'http://localhost:50000/nr';
   }
 
   /**
-   * Server's public key in stringHex
-   * @return {stringHex}
+   * Send first message with proof of origin
+   * @param {JSON} json - body + signature
+   * @return {JSON} - Received message with proof of reception
    */
-  getPublicKey(): Observable<any> {
-    return this.http.get<any>(this.url + 'pubKey');
+  sendMessage(json:JSON): Observable<JSON> {
+    return this.http.post<JSON>(this.url + '',json);
   }
 
   /**
@@ -42,7 +40,7 @@ export class RsaService {
    * @return {stringHex} - signature in stringHex
    */
   signMessage (message:string) : Observable<any> {
-      return this.http.post<any>(this.url + 'sign',{message:message});
+    return this.http.post<any>(this.url + 'sign',{message:message});
   }
 
   /**

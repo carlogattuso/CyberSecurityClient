@@ -25,6 +25,7 @@ export class DashboardComponent implements OnInit {
    * @type {rsa.PublicKey}
    */
   pubKey;
+
   /**
    * Save number one for more handy bigint operations
    * @name _ONE

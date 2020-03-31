@@ -5,7 +5,7 @@
         <mat-card-title>
           Non-repudiation Module
         </mat-card-title>
-        <form [formGroup]="nonRepudiationForm">
+        <form [formGroup]="nrForm">
           <div class="form-group">
             <mat-form-field>
               <mat-label>Write message to send</mat-label>
@@ -14,9 +14,12 @@
               </label>
               <mat-icon matSuffix></mat-icon>
             </mat-form-field><br/>
-            <button mat-raised-button color="primary" style="margin-right:5px;" (click)="sendMessage()" [disabled]="!nonRepudiationForm.valid">Send Message</button>
+            <button mat-raised-button color="primary" style="margin-right:5px;" (click)="sendMessage()" [disabled]="!nrForm.valid">Send Message</button>
           </div>
         </form>
+        <div *ngIf="this.pr">
+          <mat-chip color="success">Proof of reception good!</mat-chip>
+        </div>
       </mat-card-content>
     </mat-card>
   </mat-grid-tile>
