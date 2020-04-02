@@ -22,6 +22,7 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MatTableModule} from "@angular/material/table";
 import {MatChipsModule} from "@angular/material/chips";
 import { NonRepudiationComponent } from './component/non-repudiation/non-repudiation.component';
+import {webSocket} from "rxjs/webSocket";
 
 @NgModule({
   declarations: [

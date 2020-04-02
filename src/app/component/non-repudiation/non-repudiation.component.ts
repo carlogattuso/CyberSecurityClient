@@ -3,7 +3,9 @@ import * as rsa from 'rsa';
 import * as bc from 'bigint-conversion';
 import {FormBuilder, FormControl, FormGroup, Validators} from "@angular/forms";
 import {NonRepudiationBService} from "../../services/non-repudiation-B.service";
+import {NonRepudiationTTPService} from "../../services/non-repudiation-TTP.service";
 import * as sha from 'object-sha';
+import {webSocket, WebSocketSubject} from 'rxjs/webSocket';
 
 @Component({
   selector: 'app-no-repudiation',
@@ -48,13 +50,17 @@ export class NonRepudiationComponent implements OnInit {
    */
   TTPPubKey;
 
+  myWebSocket: WebSocketSubject<JSON> = webSocket('ws://localhost:50001');
+
   /**
    * Non-Repudiation Component constructor
    * @constructor
    * @param {NonRepudiationBService} nrBService - Non-Repudiation Service with peer B.
+   * @param {NonRepudiationTTPService} nrTTPService - Non-Repudiation Service with peer TTP.
    * @param {formBuilder} formBuilder - FormBuilder to manage forms.
+   * @param {WebSocket} ws - Websocket with TTP to subscribe for the publication key + proof of publication
    */
-  constructor(private nrBService: NonRepudiationBService, private formBuilder: FormBuilder) {
+  constructor(private nrBService: NonRepudiationBService, private nrTTPService: NonRepudiationTTPService, private formBuilder: FormBuilder) {
     this.nrForm = this.formBuilder.group({
       m: new FormControl('', Validators.required),
     });
@@ -73,7 +79,14 @@ export class NonRepudiationComponent implements OnInit {
    */
   key: string;
 
-  async ngOnInit(){
+  async ngOnInit() {
+
+    this.myWebSocket.next(JSON.parse(JSON.stringify({
+      request: 'SUBSCRIBE',
+      message: '',
+      channel: 'key'
+    })));
+
     /** 256 bitLength keyPair generation */
     this.keyPair = await rsa.generateRandomKeys(2048);
 
@@ -82,7 +95,7 @@ export class NonRepudiationComponent implements OnInit {
      *
      * @return {CryptoKey} cryptoKey - cryptoKey with a 256-length key generated
      */
-    await crypto.subtle.generateKey({name:'AES-CBC',length:256},true,['encrypt','decrypt'])
+    await crypto.subtle.generateKey({name: 'AES-CBC', length: 256}, true, ['encrypt', 'decrypt'])
       .then(data => this.cryptoKey = data);
 
     /**
@@ -91,7 +104,7 @@ export class NonRepudiationComponent implements OnInit {
      * @param {CryptoKey} cryptoKey - cryptoKey with extractable keys
      * @return {stringHex} key - 256-length key
      */
-    await crypto.subtle.exportKey("raw",this.cryptoKey)
+    await crypto.subtle.exportKey("raw", this.cryptoKey)
       .then(data => this.key = bc.bufToHex(data));
   }
 
@@ -105,7 +118,7 @@ export class NonRepudiationComponent implements OnInit {
      * @return {stringHex} c - 256-length cipherText
      */
     await crypto.subtle.encrypt(
-      {name:'AES-CBC',iv:crypto.getRandomValues(new Uint8Array(16))}, this.cryptoKey, bc.textToBuf(this.m))
+      {name: 'AES-CBC', iv: crypto.getRandomValues(new Uint8Array(16))}, this.cryptoKey, bc.textToBuf(this.m))
       .then(data => this.c = bc.bufToHex(data));
   }
 
@@ -117,11 +130,6 @@ export class NonRepudiationComponent implements OnInit {
    */
   async digestBody(obj) {
     return await sha.digest(obj, 'SHA-256');
-  }
-
-  async verifySignature(obj,pubKey,signature) {
-    let proofDigest = bc.bigintToHex(await pubKey.verify(bc.hexToBigint(signature)));
-    return await this.digestBody(obj) === proofDigest;
   }
 
   /**
@@ -157,19 +165,19 @@ export class NonRepudiationComponent implements OnInit {
    * @name pr
    * @type {stringHex}
    */
-  pr:string;
+  pr: string;
   /**
    * Proof of key origin (signed body of message type 4 digest)
    * @name pkp
    * @type {stringHex}
    */
-  pko:string;
+  pko: string;
   /**
    * Proof of key publication (signed body of message type 4 digest)
    * @name pkp
    * @type {stringHex}
    */
-  pkp:string;
+  pkp: string;
 
   /** Sent message to peer B method */
   async sendMessage() {
@@ -184,72 +192,53 @@ export class NonRepudiationComponent implements OnInit {
      * @param {stringHex} msg - CipherText to reveal message '@name m'
      * @param {stringHex} timestamp - Time consistency check
      */
-    let body = JSON.parse(JSON.stringify({ type: 1, src: 'A', dst: 'B', msg: this.c, timestamp: Date.now() }));
+    let body = JSON.parse(JSON.stringify({type: 1, src: 'A', dst: 'B', msg: this.c, timestamp: Date.now()}));
 
     /** Signing digest of message body with SHA-256**/
     await this.digestBody(body)
       .then(data => this.keyPair.privateKey.sign(bc.hexToBigint(data)))
       .then(data => this.po = bc.bigintToHex(data));
 
-    let json = JSON.parse(JSON.stringify({body:body,signature:this.po,
-      pubKey:{e:bc.bigintToHex(this.keyPair.publicKey.e),n:bc.bigintToHex(this.keyPair.publicKey.n)}}));
+    let json = JSON.parse(JSON.stringify({
+      body: body, signature: this.po,
+      pubKey: {e: bc.bigintToHex(this.keyPair.publicKey.e), n: bc.bigintToHex(this.keyPair.publicKey.n)}
+    }));
 
     /** Falta comentar **/
     this.nrBService.sendMessage(json).subscribe(
       async data => {
         let res = JSON.parse(JSON.stringify(data));
-        this.bPubKey = new rsa.PublicKey(bc.hexToBigint(res.pubKey.e),bc.hexToBigint(res.pubKey.n));
+        this.bPubKey = new rsa.PublicKey(bc.hexToBigint(res.pubKey.e), bc.hexToBigint(res.pubKey.n));
         let proofDigest = bc.bigintToHex(await this.bPubKey.verify(bc.hexToBigint(res.signature)));
         let bodyDigest = await sha.digest(res.body);
-        if(bodyDigest === proofDigest){
+        if (bodyDigest === proofDigest) {
           this.pr = res.signature;
-          let body = JSON.parse(JSON.stringify({ type: 3, src: 'A', dst: 'TTP', msg: this.key, timestamp: Date.now() }));
+          let body = JSON.parse(JSON.stringify({type: 3, src: 'A', dst: 'TTP', msg: this.key, timestamp: Date.now()}));
 
           await this.digestBody(body)
             .then(data => this.keyPair.privateKey.sign(bc.hexToBigint(data)))
             .then(data => this.pko = bc.bigintToHex(data));
 
-          let json = JSON.parse(JSON.stringify({ body: body, signature: this.pko,
-            pubKey:{ e: bc.bigintToHex(this.keyPair.publicKey.e), n: bc.bigintToHex(this.keyPair.publicKey.n) } }));
+          let json = JSON.parse(JSON.stringify({
+            body: body, signature: this.pko,
+            pubKey: {e: bc.bigintToHex(this.keyPair.publicKey.e), n: bc.bigintToHex(this.keyPair.publicKey.n)}
+          }));
 
           console.log("All worked fine");
           console.log({
-            po:this.po,
-            pr:this.pr,
-            pko:this.pko
+            po: this.po,
+            pr: this.pr,
+            pko: this.pko
           });
-          await this.subscribe();
-          await this.publish(json);
+
+          this.nrTTPService.sendKey(json).subscribe(
+            async data => console.log(data));
+
+          this.myWebSocket.asObservable().subscribe(data => console.log(data));
+
         } else {
           console.log("Bad authentication of proof of reception");
         }
-    });
-  }
-
-  async subscribe() {
-    const ws = new WebSocket('ws://localhost:50001');
-    ws.onopen = function () {
-      ws.send(JSON.stringify({
-        request: 'SUBSCRIBE',
-        message: '',
-        channel: 'key'
-      }));
-      ws.onmessage = function(event){
-        let data = JSON.parse(event.data);
-        console.log(data);
-      };
-    };
-  }
-
-  async publish(message) {
-    const ws = new WebSocket('ws://localhost:50001');
-    ws.onopen = function () {
-      ws.send(JSON.stringify({
-        request: 'PUBLISH',
-        message: message,
-        channel: 'key'
-      }));
-      ws.close();
-    };
+      });
   }
 }
