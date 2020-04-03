@@ -44,13 +44,13 @@ export class NonRepudiationComponent implements OnInit {
   bPubKey;
 
   /**
-   * B's RSA public key
-   * @name aPubKey
+   * TTP's RSA public key
+   * @name TTPPubKey
    * @type {rsa.PublicKey}
    */
   TTPPubKey;
 
-  myWebSocket: WebSocketSubject<JSON> = webSocket('ws://localhost:50001');
+  myWebSocket: WebSocketSubject<JSON>;
 
   /**
    * Non-Repudiation Component constructor
@@ -80,13 +80,6 @@ export class NonRepudiationComponent implements OnInit {
   key: string;
 
   async ngOnInit() {
-
-    this.myWebSocket.next(JSON.parse(JSON.stringify({
-      request: 'SUBSCRIBE',
-      message: '',
-      channel: 'key'
-    })));
-
     /** 256 bitLength keyPair generation */
     this.keyPair = await rsa.generateRandomKeys(2048);
 
@@ -224,17 +217,21 @@ export class NonRepudiationComponent implements OnInit {
             pubKey: {e: bc.bigintToHex(this.keyPair.publicKey.e), n: bc.bigintToHex(this.keyPair.publicKey.n)}
           }));
 
-          console.log("All worked fine");
-          console.log({
-            po: this.po,
-            pr: this.pr,
-            pko: this.pko
-          });
-
           this.nrTTPService.sendKey(json).subscribe(
-            async data => console.log(data));
-
-          this.myWebSocket.asObservable().subscribe(data => console.log(data));
+            async data => {
+              let res = JSON.parse(JSON.stringify(data));
+              this.TTPPubKey = new rsa.PublicKey(bc.hexToBigint(res.pubKey.e), bc.hexToBigint(res.pubKey.n));
+              let proofDigest = bc.bigintToHex(await this.TTPPubKey.verify(bc.hexToBigint(res.signature)));
+              let bodyDigest = await sha.digest(res.body);
+              if (bodyDigest === proofDigest) {
+                this.pkp = res.signature;
+                console.log("All data verified");
+                console.log({
+                  pr: this.pr,
+                  pkp: this.pkp
+                });
+              }
+            });
 
         } else {
           console.log("Bad authentication of proof of reception");
