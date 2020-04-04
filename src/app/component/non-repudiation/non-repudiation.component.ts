@@ -200,7 +200,7 @@ export class NonRepudiationComponent implements OnInit {
         this.bPubKey = new rsa.PublicKey(bc.hexToBigint(res.pubKey.e), bc.hexToBigint(res.pubKey.n));
         let proofDigest = bc.bigintToHex(await this.bPubKey.verify(bc.hexToBigint(res.signature)));
         let bodyDigest = await this.digest(res.body);
-        if (bodyDigest === proofDigest && this.checkTimestamp(res.body.timestamp)) {
+        if (bodyDigest.trim() === proofDigest.trim() && this.checkTimestamp(res.body.timestamp)) {
           this.pr = res.signature;
           let body = JSON.parse(JSON.stringify({type: 3, src: 'A', dst: 'TTP', msg: this.key, timestamp: Date.now()}));
 
