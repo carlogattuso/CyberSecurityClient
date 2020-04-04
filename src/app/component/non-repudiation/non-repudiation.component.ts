@@ -5,7 +5,6 @@ import {FormBuilder, FormControl, FormGroup, Validators} from "@angular/forms";
 import {NonRepudiationBService} from "../../services/non-repudiation-B.service";
 import {NonRepudiationTTPService} from "../../services/non-repudiation-TTP.service";
 import * as sha from 'object-sha';
-import {webSocket, WebSocketSubject} from 'rxjs/webSocket';
 
 @Component({
   selector: 'app-no-repudiation',
@@ -50,15 +49,12 @@ export class NonRepudiationComponent implements OnInit {
    */
   TTPPubKey;
 
-  myWebSocket: WebSocketSubject<JSON>;
-
   /**
    * Non-Repudiation Component constructor
    * @constructor
    * @param {NonRepudiationBService} nrBService - Non-Repudiation Service with peer B.
    * @param {NonRepudiationTTPService} nrTTPService - Non-Repudiation Service with peer TTP.
    * @param {formBuilder} formBuilder - FormBuilder to manage forms.
-   * @param {WebSocket} ws - Websocket with TTP to subscribe for the publication key + proof of publication
    */
   constructor(private nrBService: NonRepudiationBService, private nrTTPService: NonRepudiationTTPService, private formBuilder: FormBuilder) {
     this.nrForm = this.formBuilder.group({
@@ -121,7 +117,7 @@ export class NonRepudiationComponent implements OnInit {
    * @param {string} obj
    * @return {ArrayBuffer}
    */
-  async digestBody(obj) {
+  async digest(obj) {
     return await sha.digest(obj, 'SHA-256');
   }
 
@@ -188,7 +184,7 @@ export class NonRepudiationComponent implements OnInit {
     let body = JSON.parse(JSON.stringify({type: 1, src: 'A', dst: 'B', msg: this.c, timestamp: Date.now()}));
 
     /** Signing digest of message body with SHA-256**/
-    await this.digestBody(body)
+    await this.digest(body)
       .then(data => this.keyPair.privateKey.sign(bc.hexToBigint(data)))
       .then(data => this.po = bc.bigintToHex(data));
 
@@ -203,12 +199,12 @@ export class NonRepudiationComponent implements OnInit {
         let res = JSON.parse(JSON.stringify(data));
         this.bPubKey = new rsa.PublicKey(bc.hexToBigint(res.pubKey.e), bc.hexToBigint(res.pubKey.n));
         let proofDigest = bc.bigintToHex(await this.bPubKey.verify(bc.hexToBigint(res.signature)));
-        let bodyDigest = await sha.digest(res.body);
-        if (bodyDigest === proofDigest) {
+        let bodyDigest = await this.digest(res.body);
+        if (bodyDigest === proofDigest && this.checkTimestamp(res.body.timestamp)) {
           this.pr = res.signature;
           let body = JSON.parse(JSON.stringify({type: 3, src: 'A', dst: 'TTP', msg: this.key, timestamp: Date.now()}));
 
-          await this.digestBody(body)
+          await this.digest(body)
             .then(data => this.keyPair.privateKey.sign(bc.hexToBigint(data)))
             .then(data => this.pko = bc.bigintToHex(data));
 
@@ -237,5 +233,10 @@ export class NonRepudiationComponent implements OnInit {
           console.log("Bad authentication of proof of reception");
         }
       });
+  }
+
+  checkTimestamp(timestamp:number) {
+    const time = Date.now();
+    return (timestamp > (time - 300000) && timestamp < (time + 300000));
   }
 }
