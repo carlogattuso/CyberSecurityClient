@@ -67,13 +67,15 @@ export class NonRepudiationComponent implements OnInit {
    * @name cryptoKey
    * @type {CryptoKey}
    */
-  cryptoKey;
+  cryptoKey: CryptoKey;
   /**
    * AES-256-CBC key
    * @name key
    * @type {stringHex}
    */
   key: string;
+
+  iv: Uint8Array;
 
   async ngOnInit() {
     /** 256 bitLength keyPair generation */
@@ -99,6 +101,7 @@ export class NonRepudiationComponent implements OnInit {
 
   /** Encrption method */
   async encrypt() {
+    this.iv = crypto.getRandomValues(new Uint8Array(16));
     /**
      * Encrypts any message with A-B symmetric key, using random iv
      *
@@ -107,7 +110,7 @@ export class NonRepudiationComponent implements OnInit {
      * @return {stringHex} c - 256-length cipherText
      */
     await crypto.subtle.encrypt(
-      {name: 'AES-CBC', iv: crypto.getRandomValues(new Uint8Array(16))}, this.cryptoKey, bc.textToBuf(this.m))
+      {name: 'AES-CBC', iv: this.iv}, this.cryptoKey, bc.textToBuf(this.m))
       .then(data => this.c = bc.bufToHex(data));
   }
 
@@ -202,7 +205,7 @@ export class NonRepudiationComponent implements OnInit {
         let bodyDigest = await this.digest(res.body);
         if (bodyDigest.trim() === proofDigest.trim() && this.checkTimestamp(res.body.timestamp)) {
           this.pr = res.signature;
-          let body = JSON.parse(JSON.stringify({type: 3, src: 'A', dst: 'TTP', msg: this.key, timestamp: Date.now()}));
+          let body = JSON.parse(JSON.stringify({type: 3, src: 'A', dst: 'TTP', msg: this.key, iv: bc.bufToHex(this.iv), timestamp: Date.now()}));
 
           await this.digest(body)
             .then(data => this.keyPair.privateKey.sign(bc.hexToBigint(data)))
