@@ -23,12 +23,14 @@ import {MatTableModule} from "@angular/material/table";
 import {MatChipsModule} from "@angular/material/chips";
 import { NonRepudiationComponent } from './component/non-repudiation/non-repudiation.component';
 import {webSocket} from "rxjs/webSocket";
+import { HomomorphismComponent } from './component/homomorphism/homomorphism.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     DashboardComponent,
-    NonRepudiationComponent
+    NonRepudiationComponent,
+    HomomorphismComponent
   ],
   imports: [
     AppRoutingModule,

@@ -1,0 +1,17 @@
+<form #homomorphism="ngForm" (ngSubmit)="sendWords(homomorphism)">
+  <h5><b>Claves:</b>{{key_g}}</h5>
+  <h5><b>Claves:</b>{{key_n}}</h5>
+  <h5>Homomorphism</h5>
+  <div class="row">
+        <div class="input-field col s12">
+        <input type="text" name="wordOne" #name="ngModel" [(ngModel)]="clientService.wordOne" placeholder="Ingresa tu nombre 1">
+        <input type="text" name="wordTwo" #name="ngModel" [(ngModel)]="clientService.wordTwo" placeholder="Ingresa tu nombre 2">
+        </div>
+                <div class="card-action">
+          <div class="input-field col 12">
+              <button class="btn right" style="margin-left: 2px">Send words</button>
+          </div>
+        </div>
+
+</div>
+</form>

@@ -3,6 +3,8 @@ import { Routes, RouterModule } from '@angular/router';
 import {AppComponent} from './app.component';
 import {DashboardComponent} from './component/dashboard/dashboard.component';
 import {NonRepudiationComponent} from "./component/non-repudiation/non-repudiation.component";
+import {HomomorphismComponent} from "./component/homomorphism/homomorphism.component";
+
 
 
 const routes: Routes = [
@@ -13,6 +15,10 @@ const routes: Routes = [
   {
     path: 'nr',
     component: NonRepudiationComponent
+  },
+  {
+    path: 'homomorphism',
+    component: HomomorphismComponent
   }
 ];
 
