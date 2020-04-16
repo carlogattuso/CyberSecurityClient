@@ -24,11 +24,14 @@ import {MatChipsModule} from "@angular/material/chips";
 import { NonRepudiationComponent } from './component/non-repudiation/non-repudiation.component';
 import {webSocket} from "rxjs/webSocket";
 import { HomomorphismComponent } from './component/homomorphism/homomorphism.component';
+import { SecretSharingComponent } from './component/secret-sharing/secret-sharing.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     DashboardComponent,
+    NonRepudiationComponent,
+    SecretSharingComponent,
     NonRepudiationComponent,
     HomomorphismComponent
   ],
