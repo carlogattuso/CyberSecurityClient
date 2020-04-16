@@ -76,8 +76,8 @@ export class HomomorphismComponent implements OnInit {
     const message = {
       body: bc.bigintToHex(encryptedSum)
     };
-    this.clientService.postHomomorphic(message).subscribe(res => {
-    });
+    // this.clientService.postHomomorphic(message).subscribe(res => {
+    // });
   }
 
 
