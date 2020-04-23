@@ -3,7 +3,8 @@ import { RsaService } from '../../services/rsa.service';
 import * as rsa from 'rsa';
 import * as bc from 'bigint-conversion';
 import * as bcu from 'bigint-crypto-utils';
-import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+import {Form, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+import {SecretSharingService} from "../../services/secret-sharing.service";
 
 @Component({
   selector: 'app-blind-signature',
@@ -37,9 +38,10 @@ export class DashboardComponent implements OnInit {
    * DashBoard constructor
    * @constructor
    * @param {rsaService} rsaService - RSA Service.
+   * @param {ssService} ssService - Secret Sharing Service.
    * @param {formBuilder} formBuilder - FormBuilder to manage forms.
    */
-  constructor(private rsaService: RsaService, private formBuilder: FormBuilder) {
+  constructor(private rsaService: RsaService, private ssService: SecretSharingService, private formBuilder: FormBuilder) {
     this.bsForm = this.formBuilder.group({
       bsm: new FormControl('', Validators.required),
     });
@@ -265,6 +267,63 @@ export class DashboardComponent implements OnInit {
         /** Showing values once promises are finished and services are subscribed */
         document.getElementById('crypto-message').innerHTML = this.c as string;
         document.getElementById('crypto-clear-text').innerHTML = this.eClearText as string;
+      }
+    );
+  }
+
+  /**
+   * Shamir's secret key sharing
+   *
+   * Test of slicing and recovering a secret key to decrypt message
+   * with Shamir's secret key sharing implementation
+   *
+   */
+
+  /**
+   * Form Group to manage Shamir's secret sharing form
+   * @name sssForm
+   * @type {FormGroup}
+   */
+  ssForm: FormGroup;
+  /**
+   * Shamir's secret key slices
+   * @name slices
+   * @type {stringHex[]}
+   */
+  slices: string[];
+  /**
+  * Key slice
+  * @name slice
+  * @type {stringHex[]}
+  */
+  slice: string;
+
+  /** Get Shamir's secret key sliced into a list of strings */
+  async getSlices() {
+    /**
+     * Gets the secret RSA private key slices into a list of strings
+     * @return {stringHex[]} slices - sliced rsa private key
+     */
+    this.ssService.getSlices().subscribe(
+      /** We receive the slices of the secret **/
+      data => {
+        this.slices = data;
+        console.log(this.slices);
+      }
+    );
+  }
+
+  /** Send secret key slice to recover complete key */
+  async postSlice() {
+    this.slice = this.slices.pop();
+    console.log(this.slice);
+    /**
+     * Sends one slice of the list to the server.
+     * @param {string} slice - slice of the secret
+     */
+    this.ssService.postSlice(this.slice).subscribe(
+      data => {
+        this.slice = data;
       }
     );
   }

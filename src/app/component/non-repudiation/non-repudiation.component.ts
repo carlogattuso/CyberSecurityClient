@@ -78,7 +78,7 @@ export class NonRepudiationComponent implements OnInit {
   iv: Uint8Array;
 
   async ngOnInit() {
-    /** 256 bitLength keyPair generation */
+    /** 2048 bitLength keyPair generation */
     this.keyPair = await rsa.generateRandomKeys(2048);
 
     /**
