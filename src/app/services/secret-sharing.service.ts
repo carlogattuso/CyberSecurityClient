@@ -41,7 +41,7 @@ export class SecretSharingService {
    * @param {string} slice - add slice to recover secret
    * @return {stringHex} - current recovered secret
    */
-  postSlice (slice:string) : Observable<any> {
+  sendSlice (slice:string) : Observable<any> {
     return this.http.post<any>(this.url + 'combine',{slice:slice});
   }
 }

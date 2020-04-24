@@ -5,6 +5,7 @@ import * as bc from 'bigint-conversion';
 import * as bcu from 'bigint-crypto-utils';
 import {Form, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {SecretSharingService} from "../../services/secret-sharing.service";
+import {consoleTestResultHandler} from "tslint/lib/test";
 
 @Component({
   selector: 'app-blind-signature',
@@ -288,13 +289,13 @@ export class DashboardComponent implements OnInit {
   /**
    * Shamir's secret key slices
    * @name slices
-   * @type {stringHex[]}
+   * @type {Array<string>}
    */
   slices: string[];
   /**
   * Key slice
   * @name slice
-  * @type {stringHex[]}
+  * @type {string}
   */
   slice: string;
 
@@ -307,21 +308,22 @@ export class DashboardComponent implements OnInit {
     this.ssService.getSlices().subscribe(
       /** We receive the slices of the secret **/
       data => {
-        this.slices = data;
+        this.slices = data.slices;
         console.log(this.slices);
       }
     );
   }
 
   /** Send secret key slice to recover complete key */
-  async postSlice() {
-    this.slice = this.slices.pop();
-    console.log(this.slice);
+  async sendSlice() {
+    this.slice = this.slices[this.slices.length - 1];
+    this.slices.splice(-1,1);
+    console.log(this.slices);
     /**
      * Sends one slice of the list to the server.
      * @param {string} slice - slice of the secret
      */
-    this.ssService.postSlice(this.slice).subscribe(
+    this.ssService.sendSlice(this.slice).subscribe(
       data => {
         this.slice = data;
       }
