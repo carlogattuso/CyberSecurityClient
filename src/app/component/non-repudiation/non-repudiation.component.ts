@@ -68,6 +68,7 @@ export class NonRepudiationComponent implements OnInit {
    * @type {CryptoKey}
    */
   cryptoKey: CryptoKey;
+
   /**
    * AES-256-CBC key
    * @name key

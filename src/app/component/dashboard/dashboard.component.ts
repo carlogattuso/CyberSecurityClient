@@ -5,7 +5,7 @@ import * as bc from 'bigint-conversion';
 import * as bcu from 'bigint-crypto-utils';
 import {Form, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {SecretSharingService} from "../../services/secret-sharing.service";
-import {consoleTestResultHandler} from "tslint/lib/test";
+import * as io from 'socket.io-client';
 
 @Component({
   selector: 'app-blind-signature',
@@ -35,6 +35,8 @@ export class DashboardComponent implements OnInit {
    */
   _ONE:BigInt = BigInt(1);
 
+  socket;
+
   /**
    * DashBoard constructor
    * @constructor
@@ -61,6 +63,14 @@ export class DashboardComponent implements OnInit {
         this.pubKey = new rsa.PublicKey(bc.hexToBigint(data.e), bc.hexToBigint(data.n));
       }
     );
+    this.socket = io('http://localhost:50003');
+    this.socket.on('hi', (data) => {
+      this.welcome = data;
+    });
+    this.socket.on('secret', (data) => {
+      this.slice = data;
+      console.log(this.slice);
+    });
   }
 
   /**
@@ -286,12 +296,21 @@ export class DashboardComponent implements OnInit {
    * @type {FormGroup}
    */
   ssForm: FormGroup;
+
+  /**
+   * New secret
+   * @name secret
+   * @type {string}
+   */
+  secret: string;
+
   /**
    * Shamir's secret key slices
    * @name slices
    * @type {Array<string>}
    */
   slices: string[];
+
   /**
   * Key slice
   * @name slice
@@ -299,19 +318,40 @@ export class DashboardComponent implements OnInit {
   */
   slice: string;
 
+  /**
+   * Welcome to server
+   * @name welcome
+   * @type {string}
+   */
+  welcome: string;
+
+  /**
+   * CryptoSubtle CryptoKey object
+   * @name cryptoKey
+   * @type {CryptoKey}
+   */
+  cryptoKey: CryptoKey;
+
   /** Get Shamir's secret key sliced into a list of strings */
-  async getSlices() {
+  async shareSecret() {
     /**
-     * Gets the secret RSA private key slices into a list of strings
-     * @return {stringHex[]} slices - sliced rsa private key
+     * Generates CryptoKey using AES-256-CBC block cipher
+     *
+     * @return {CryptoKey} cryptoKey - cryptoKey with a 256-length key generated
      */
-    this.ssService.getSlices().subscribe(
-      /** We receive the slices of the secret **/
-      data => {
-        this.slices = data.slices;
-        console.log(this.slices);
-      }
-    );
+    await crypto.subtle.generateKey({name: 'AES-CBC', length: 256}, true, ['encrypt', 'decrypt'])
+      .then(data => this.cryptoKey = data);
+
+    /**
+     * Exports 256-length key from previous CryptoKey
+     *
+     * @param {CryptoKey} cryptoKey - cryptoKey with extractable keys
+     * @return {stringHex} key - 256-length key
+     */
+    await crypto.subtle.exportKey("raw", this.cryptoKey)
+      .then(data => this.secret = bc.bufToHex(data));
+
+    this.socket.emit('share', this.secret);
   }
 
   /** Send secret key slice to recover complete key */
@@ -319,14 +359,5 @@ export class DashboardComponent implements OnInit {
     this.slice = this.slices[this.slices.length - 1];
     this.slices.splice(-1,1);
     console.log(this.slices);
-    /**
-     * Sends one slice of the list to the server.
-     * @param {string} slice - slice of the secret
-     */
-    this.ssService.sendSlice(this.slice).subscribe(
-      data => {
-        this.slice = data;
-      }
-    );
   }
 }

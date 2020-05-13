@@ -130,7 +130,10 @@
         <mat-card-title>
           Shamir's secret sharing
         </mat-card-title>
-          <button mat-raised-button color="primary" style="margin-right:5px;" (click)="getSlices()">Get Slices</button>
+        <mat-card-header>
+          <h3 class="center">{{welcome}}</h3>
+        </mat-card-header>
+          <button mat-raised-button color="primary" style="margin-right:5px;" (click)="shareSecret()">Share new secret</button>
           <button mat-raised-button color="primary" style="margin-right:5px;" (click)="sendSlice()">Post Slice</button>
       </mat-card-content>
     </mat-card>
