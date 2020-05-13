@@ -23,7 +23,10 @@ mat-label {
   font-weight: bold;
 }
 
-.center {
-  text-align: left;
+.full-width {
+  width: 100%;
+  text-align: center;
+  margin: 5%;
 }
+
 

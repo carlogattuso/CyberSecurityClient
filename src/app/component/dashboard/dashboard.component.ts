@@ -4,7 +4,6 @@ import * as rsa from 'rsa';
 import * as bc from 'bigint-conversion';
 import * as bcu from 'bigint-crypto-utils';
 import {Form, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
-import {SecretSharingService} from "../../services/secret-sharing.service";
 import * as io from 'socket.io-client';
 
 @Component({
@@ -38,13 +37,19 @@ export class DashboardComponent implements OnInit {
   socket;
 
   /**
+   * Enables sending current slice
+   * @name enableSend
+   * @type {boolean}
+   */
+  enableSend:boolean;
+
+  /**
    * DashBoard constructor
    * @constructor
    * @param {rsaService} rsaService - RSA Service.
-   * @param {ssService} ssService - Secret Sharing Service.
    * @param {formBuilder} formBuilder - FormBuilder to manage forms.
    */
-  constructor(private rsaService: RsaService, private ssService: SecretSharingService, private formBuilder: FormBuilder) {
+  constructor(private rsaService: RsaService, private formBuilder: FormBuilder) {
     this.bsForm = this.formBuilder.group({
       bsm: new FormControl('', Validators.required),
     });
@@ -68,8 +73,14 @@ export class DashboardComponent implements OnInit {
       this.welcome = data;
     });
     this.socket.on('secret', (data) => {
-      this.slice = data;
-      console.log(this.slice);
+      this.slice = data.slice;
+      this.secret = data.secret;
+      this.enableSend = true;
+      this.recovered = "";
+    });
+    this.socket.on('recovered', (data) => {
+      this.recovered = data;
+      this.enableSend = false;
     });
   }
 
@@ -298,18 +309,11 @@ export class DashboardComponent implements OnInit {
   ssForm: FormGroup;
 
   /**
-   * New secret
+   * Shamir's sharing key secret
    * @name secret
    * @type {string}
    */
   secret: string;
-
-  /**
-   * Shamir's secret key slices
-   * @name slices
-   * @type {Array<string>}
-   */
-  slices: string[];
 
   /**
   * Key slice
@@ -317,6 +321,13 @@ export class DashboardComponent implements OnInit {
   * @type {string}
   */
   slice: string;
+
+  /**
+   * Key recovered
+   * @name recovered
+   * @type {string}
+   */
+  recovered: string;
 
   /**
    * Welcome to server
@@ -332,32 +343,9 @@ export class DashboardComponent implements OnInit {
    */
   cryptoKey: CryptoKey;
 
-  /** Get Shamir's secret key sliced into a list of strings */
-  async shareSecret() {
-    /**
-     * Generates CryptoKey using AES-256-CBC block cipher
-     *
-     * @return {CryptoKey} cryptoKey - cryptoKey with a 256-length key generated
-     */
-    await crypto.subtle.generateKey({name: 'AES-CBC', length: 256}, true, ['encrypt', 'decrypt'])
-      .then(data => this.cryptoKey = data);
-
-    /**
-     * Exports 256-length key from previous CryptoKey
-     *
-     * @param {CryptoKey} cryptoKey - cryptoKey with extractable keys
-     * @return {stringHex} key - 256-length key
-     */
-    await crypto.subtle.exportKey("raw", this.cryptoKey)
-      .then(data => this.secret = bc.bufToHex(data));
-
-    this.socket.emit('share', this.secret);
-  }
-
-  /** Send secret key slice to recover complete key */
+  /** Send Shamir's secret key slice */
   async sendSlice() {
-    this.slice = this.slices[this.slices.length - 1];
-    this.slices.splice(-1,1);
-    console.log(this.slices);
+    this.socket.emit('slice', this.slice);
+    this.enableSend = false;
   }
 }
