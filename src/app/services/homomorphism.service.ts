@@ -25,7 +25,7 @@ export class HomomorphismService {
    * @param {HttpClient} http - HttpClient module
    */
   constructor(private http: HttpClient) {
-    this.url = 'http://localhost:50000/homomorphism';
+    this.url = 'http://localhost:50000/paillier';
   }
   /**
   * Server's public key in stringHex
@@ -36,11 +36,11 @@ export class HomomorphismService {
   }
 
   /**
-     * Service to to send the homomorphic message
-     * @param {body} body - message
-     */
-    postHomomorphic(body: object): Observable<any> {
-    return this.http.post<any>(this.url + '/post', body);
+   * Service to to send the homomorphic message
+   * @param {body} body - message
+   */
+  postHomomorphic(body: object): Observable<any> {
+  return this.http.post<any>(this.url + '/decrypt', body);
   }
 
 }
