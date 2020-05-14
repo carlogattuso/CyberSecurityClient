@@ -16,10 +16,19 @@
             </mat-form-field><br/>
             <button mat-raised-button color="primary" style="margin-right:5px;" (click)="sendMessage()" [disabled]="!nrForm.valid">Send Message</button>
           </div>
+          <div>
+            <mat-list>
+              <mat-list-item>
+                <mat-label>Proof of reception:<br></mat-label>
+                <textarea id="proof-reception">{{this.pr}}</textarea>
+              </mat-list-item>
+              <mat-list-item>
+                <mat-label>Proof of key publication:<br></mat-label>
+                <textarea id="proof-key-pub">{{this.pkp}}</textarea>
+              </mat-list-item>
+            </mat-list>
+          </div>
         </form>
-        <div *ngIf="this.pr">
-          <mat-chip color="success">Proof of reception good!</mat-chip>
-        </div>
       </mat-card-content>
     </mat-card>
   </mat-grid-tile>

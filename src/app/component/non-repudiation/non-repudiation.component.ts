@@ -230,6 +230,10 @@ export class NonRepudiationComponent implements OnInit {
                   pr: this.pr,
                   pkp: this.pkp
                 });
+
+                /** Showing values once promises are finished and services are subscribed */
+                document.getElementById('proof-reception').innerHTML = this.pr as string;
+                document.getElementById('proof-key-pub').innerHTML = this.pkp as string;
               }
             });
 
