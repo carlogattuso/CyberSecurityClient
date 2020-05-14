@@ -1,17 +1,22 @@
-<form #homomorphism="ngForm" (ngSubmit)="sendWords(homomorphism)">
-  <h5><b>Claves:</b>{{key_g}}</h5>
-  <h5><b>Claves:</b>{{key_n}}</h5>
-  <h5>Homomorphism</h5>
-  <div class="row">
-        <div class="input-field col s12">
-        <input type="text" name="wordOne" #name="ngModel" [(ngModel)]="clientService.wordOne" placeholder="Ingresa tu nombre 1">
-        <input type="text" name="wordTwo" #name="ngModel" [(ngModel)]="clientService.wordTwo" placeholder="Ingresa tu nombre 2">
-        </div>
-                <div class="card-action">
-          <div class="input-field col 12">
-              <button class="btn right" style="margin-left: 2px">Send words</button>
+<mat-grid-list cols="1">
+  <mat-grid-tile>
+    <mat-card id="blind" style="text-align: center;">
+      <mat-card-content>
+        <mat-card-title>
+          Homomorphic-poll
+        </mat-card-title>
+        <form [formGroup]="pollForm">
+          <div class="form-group">
+            <button mat-raised-button color="primary" (click)="voteA()">Vote A</button><label *ngIf="clicked == true">{{votesA}}</label><br>
+            <button mat-raised-button color="primary" (click)="voteB()">Vote B</button><label *ngIf="clicked == true">{{votesB}}</label> <br>
+            <button mat-raised-button color="primary" (click)="voteC()">Vote C</button><label *ngIf="clicked == true">{{votesC}}</label> <br>
           </div>
+        </form>
+        <div>
+        <button mat-raised-button id="recountVotes" color="primary" *ngIf="votesA!=0 || votesB!=0 || votesC!=0" (click)="recountVotes()">Recount Votes</button>
+        <p *ngIf="clicked == true">Results: {{totalDecrypted}}</p>
         </div>
-
-</div>
-</form>
+      </mat-card-content>
+    </mat-card>
+  </mat-grid-tile>
+</mat-grid-list>

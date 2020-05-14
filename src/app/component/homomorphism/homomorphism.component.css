@@ -1,0 +1,22 @@
+mat-card {
+    width: 35%;
+    height: 25%;
+    position: center;
+    align-content: center;
+    margin-bottom: 50%;
+  }
+
+mat-card-content {
+    padding: 20% 5% 5%;
+    text-align: center;
+}
+
+button {
+    margin-bottom: 5px;
+    margin-top: 5px;
+    margin-right:5px;
+}
+
+mat-card-content {
+    padding: 70px;
+}
