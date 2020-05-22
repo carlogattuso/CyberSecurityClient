@@ -66,6 +66,7 @@ export class DashboardComponent implements OnInit {
     this.rsaService.getPublicKey().subscribe(
       data => {
         this.pubKey = new rsa.PublicKey(bc.hexToBigint(data.e), bc.hexToBigint(data.n));
+        console.log(this.pubKey);
       }
     );
     this.socket = io('http://localhost:50003');
@@ -122,7 +123,7 @@ export class DashboardComponent implements OnInit {
       /** We receive signature from server */
       async data => {
         this.s1 = data.signature;
-
+        console.log("Signature sent by the server: ", this.s1);
         /**
          * Verifies signature received from server
          *
@@ -130,6 +131,7 @@ export class DashboardComponent implements OnInit {
          * @return {stringHex} sClearText - clearText (if it is working, must match with '@name sm')
          */
         this.sClearText= bc.bigintToText(await this.pubKey.verify(bc.hexToBigint(this.s1)));
+        console.log("Original message sent by the client after verifying the Signed message: ", this.sClearText);
 
         /** Showing values once promises are finished and services are subscribed */
         document.getElementById('signature').innerHTML = this.s1 as string;
@@ -190,9 +192,11 @@ export class DashboardComponent implements OnInit {
 
   /** Blind signature test method */
   async blindSignature() {
+    console.log("Message sent: ", this.bsm);
     do {
       /** Random number inside modulo n as blind factor */
       this.r = await bcu.prime(bcu.bitLength(this.pubKey.n));
+      console.log("Blinding factor (random modn): ", this.r);
     }
     /** Verify if is coprime with r in order to do the inverse modulo **/
     while (!(bcu.gcd(this.r,this.pubKey.n) === this._ONE));
@@ -207,11 +211,13 @@ export class DashboardComponent implements OnInit {
      */
     let e = await this.pubKey.encrypt(this.r);
     this.bm = bc.bigintToHex(await e*bc.textToBigint(this.bsm)%this.pubKey.n);
+    console.log("Blind message: ", this.bm);
 
     this.rsaService.signMessage(this.bm).subscribe(
       /** We receive blind signature from server */
       async data => {
         this.bs = data.signature;
+        console.log("Blind signature message sent by the server: ", this.bs);
 
         /**
          * Takes blinding factor of the blind signature
@@ -222,7 +228,7 @@ export class DashboardComponent implements OnInit {
          * @return {bigint} s - signature from server
          */
         this.s2 = await (bc.hexToBigint(this.bs)*bcu.modInv(this.r, this.pubKey.n))%this.pubKey.n;
-
+        console.log("Signed message (multiply by the inverse of the blinding factor): ", this.s2);
         /**
          * Verifies signature received from server
          *
@@ -230,6 +236,7 @@ export class DashboardComponent implements OnInit {
          * @return {bigint} bsClearText - clearText (if it is working, must match with '@name bsm')
          */
         this.bsClearText = bc.bigintToText(await this.pubKey.verify(this.s2));
+        console.log("Original message sent by the client after verifying the Signed message: ", this.bsClearText);
 
         /** Showing values once promises are finished and services are subscribed */
         document.getElementById('blind-message').innerHTML = this.bm as string;
@@ -280,12 +287,14 @@ export class DashboardComponent implements OnInit {
      * @return {stringHex} c - cryptoMessage to send to server
      */
     this.c = bc.bigintToHex(await this.pubKey.encrypt(bc.textToBigint(this.em)));
+    console.log("Encrypted message: ", this.c);
     this.rsaService.checkClearText(this.c).subscribe(
       /** We receive the decrypted message from server (if it works it is the same as '@name em') */
       data => {
+        console.log("Decrypted message sent to the client: ", data.clearText);
         /** Formatting received message from StringHex to string */
         this.eClearText = bc.bigintToText(bc.hexToBigint(data.clearText));
-
+        console.log("Original message sent by the client (decrypted message): ", this.eClearText);
         /** Showing values once promises are finished and services are subscribed */
         document.getElementById('crypto-message').innerHTML = this.c as string;
         document.getElementById('crypto-clear-text').innerHTML = this.eClearText as string;
