@@ -32,7 +32,7 @@ export class HomomorphismService {
   * @return {stringHex}
   */
   getPublicKeyPailler(): Observable<any> {
-    return this.http.get<any>(this.url + '/pubkey');
+    return this.http.get<any>(this.url + '/pubKey');
   }
 
   /**
