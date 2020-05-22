@@ -78,6 +78,7 @@ export class HomomorphismComponent implements OnInit {
     const A = BigInt(100);
     const encryptedA = await this.publicKey.encrypt(A);
     this.listAllVotes.push(encryptedA);
+    console.log('List encrypted votes: ', this.listAllVotes);
   }
 
   async voteB() {
@@ -85,6 +86,7 @@ export class HomomorphismComponent implements OnInit {
     const B = BigInt(10);
     const encryptedB = await this.publicKey.encrypt(B);
     this.listAllVotes.push(encryptedB);
+    console.log('List encrypted votes: ', this.listAllVotes);
   }
 
   async voteC() {
@@ -92,6 +94,7 @@ export class HomomorphismComponent implements OnInit {
     const C = BigInt(1);
     const encryptedC = await this.publicKey.encrypt(C);
     this.listAllVotes.push(encryptedC);
+    console.log('List encrypted votes: ', this.listAllVotes);
   }
 
   async recountVotes() {
@@ -100,12 +103,19 @@ export class HomomorphismComponent implements OnInit {
     for (let i in this.listAllVotes) {
       totalEncrypted = await this.publicKey.addition(this.listAllVotes[i], totalEncrypted);
     }
-    let message ={
+    console.log('Sum encrypted votes');
+    console.log(totalEncrypted);
+    const message = {
       totalEncrypted: bc.bigintToHex(totalEncrypted)
     }
     this.clientService.postHomomorphic(message).subscribe(res => {
       this.totalDecrypted = bc.hexToBigint(res.msg);
-      console.log(this.totalDecrypted);
+      const votes = ("00" + this.totalDecrypted).slice(-3);
+      console.log('Sum votes: ' + votes);
+      const digits = this.totalDecrypted.toString().split('');
+      console.log('Votes A: ' + digits[0]);
+      console.log('Votes B: ' + digits[1]);
+      console.log('Votes C: ' + digits[2]);
       document.getElementById('recountVotes').style.display = 'none';
     });
   }
