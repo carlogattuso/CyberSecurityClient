@@ -75,12 +75,18 @@ export class DashboardComponent implements OnInit {
     this.socket.on('secret', (data) => {
       this.slice = data.slice;
       this.secret = data.secret;
+      console.log("A new secret has been shared: ");
+      console.log({secret: this.secret});
+      console.log("My slice of the secret is: ");
+      console.log({slice: this.slice});
       this.enableSend = true;
       this.recovered = "";
     });
     this.socket.on('recovered', (data) => {
       this.recovered = data;
       this.enableSend = false;
+      console.log("The secret has been finally recovered: ");
+      console.log({recovered: this.recovered});
     });
   }
 
@@ -346,6 +352,8 @@ export class DashboardComponent implements OnInit {
   /** Send Shamir's secret key slice */
   async sendSlice() {
     this.socket.emit('slice', this.slice);
+    console.log("I am trying to recover the secret: ");
+    console.log({slice: this.slice});
     this.enableSend = false;
   }
 }
